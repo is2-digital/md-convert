@@ -28,7 +28,7 @@ Read `docs/application.md` to learn about the application architecture.
 ### Keep docs/application.md up to date
 Before ending a session, review `docs/application.md` and update it to reflect any changes made during the session (new packages, config changes, CLI commands, architecture changes, etc.). This file is the single source of truth for the application and must stay current.
 
-When you plan your work, trace the full path of the change through the relevant layers of the codebase: {{ARCHITECTURE_LAYERS e.g., config, services, handlers, models, tests}}.
+When you plan your work, trace the full path of the change through the relevant layers of the codebase: cli, converter, tests.
 
 # Constraint
 
