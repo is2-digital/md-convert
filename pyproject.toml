@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "md-convert"
+version = "0.1.0"
+description = "CLI utility that converts MHT/MHTML files into Markdown with extracted assets"
+requires-python = ">=3.12"
+dependencies = [
+    "markdownify",
+    "beautifulsoup4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+md-convert = "md_convert.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/md_convert"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
