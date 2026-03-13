@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import email
 import email.policy
+import logging
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from urllib.parse import unquote, urlparse
 
 from md_convert import MHTConvertError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -88,3 +92,80 @@ def parse_mht(data: bytes) -> ParsedMHT:
         raise MHTConvertError("No HTML root part found in MHT file")
 
     return ParsedMHT(root_html=root_html, resources=resources)
+
+
+def _safe_filename(location: str) -> str:
+    """Derive a safe filename from a Content-Location URL or cid reference."""
+    parsed = urlparse(unquote(location))
+    path = parsed.path if parsed.path else location
+    name = PurePosixPath(path).name
+    # Strip anything that isn't filename-safe
+    name = name.replace("\x00", "")
+    return name if name else "resource"
+
+
+def _dedupe_filename(name: str, used: set[str]) -> str:
+    """Return *name* if unused, otherwise append _1, _2, … until unique."""
+    if name not in used:
+        return name
+    stem = PurePosixPath(name).stem
+    suffix = PurePosixPath(name).suffix
+    counter = 1
+    while True:
+        candidate = f"{stem}_{counter}{suffix}"
+        if candidate not in used:
+            return candidate
+        counter += 1
+
+
+def extract_resources(
+    parsed: ParsedMHT,
+    assets_dir: Path,
+) -> dict[str, str]:
+    """Write resource payloads to *assets_dir* and return a URL rewrite map.
+
+    Args:
+        parsed: The result of ``parse_mht()``.
+        assets_dir: Directory to write extracted files into (created if needed).
+
+    Returns:
+        Mapping from original reference URL (Content-Location or ``cid:…``)
+        to the relative file path within *assets_dir*
+        (e.g. ``"assets/image1.png"``).
+    """
+    if not parsed.resources:
+        return {}
+
+    assets_dir.mkdir(parents=True, exist_ok=True)
+
+    rewrite_map: dict[str, str] = {}
+    # Track which Resource objects have already been written so that
+    # multiple keys pointing to the same resource share one file.
+    written: dict[int, str] = {}  # id(Resource) -> relative path
+    used_filenames: set[str] = set()
+
+    for key, resource in parsed.resources.items():
+        rid = id(resource)
+        if rid in written:
+            rewrite_map[key] = written[rid]
+            continue
+
+        # Derive filename from Content-Location when available
+        raw_name = _safe_filename(
+            resource.content_location or key
+        )
+        filename = _dedupe_filename(raw_name, used_filenames)
+        used_filenames.add(filename)
+
+        dest = assets_dir / filename
+        try:
+            dest.write_bytes(resource.payload)
+        except OSError as exc:
+            logger.warning("Skipping resource %s: %s", key, exc)
+            continue
+
+        rel_path = str(assets_dir / filename)
+        rewrite_map[key] = rel_path
+        written[rid] = rel_path
+
+    return rewrite_map

@@ -50,6 +50,7 @@ md-convert INPUT.mht --output OUTPUT.md --assets-folder assets
 ### Functions
 
 - **`parse_mht(data: bytes) -> ParsedMHT`** — Parses MHT bytes using `email.message_from_bytes()`, validates multipart/related, extracts root HTML and builds resource map. Raises `MHTConvertError` on invalid input.
+- **`extract_resources(parsed: ParsedMHT, assets_dir: Path) -> dict[str, str]`** — Writes decoded resource payloads from `parsed.resources` to `assets_dir`, deduplicating by `Resource` identity so that Content-Location and `cid:` keys sharing the same resource produce one file. Handles filename collisions by appending `_1`, `_2`, … suffixes. Returns a rewrite map from original reference URL to the written file path.
 
 ## Development
 

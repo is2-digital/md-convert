@@ -34,3 +34,17 @@ Created test infrastructure:
 - `tests/test_converter.py`: 8 tests covering happy path, resource extraction, error cases
 
 Verification: All 8 tests pass.
+
+## 2026-03-12 — Implement resource extraction (mdc-p43)
+
+Added `extract_resources()` to `src/md_convert/converter.py`:
+- Writes decoded resource payloads to an assets directory
+- Deduplicates by Resource identity (Content-Location and cid: keys sharing the same resource produce one file)
+- Handles filename collisions via `_1`, `_2`, … suffixes
+- Derives filenames from Content-Location URLs (strips path/query)
+- Returns a rewrite map: original URL -> written file path
+- Logs warnings for unwritable resources
+
+Added 7 tests in `TestExtractResources` covering: write to disk, cid/location dedup, empty resources, directory creation, filename collisions, multiple resources, URL-based filename extraction.
+
+Verification: All 15 tests pass.
