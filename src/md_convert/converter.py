@@ -73,7 +73,12 @@ def parse_mht(data: bytes) -> ParsedMHT:
             root_html = part.get_content()
             continue
 
-        payload = part.get_content()
+        try:
+            payload = part.get_content()
+        except Exception:
+            label = content_location or content_id or part_type
+            logger.warning("Skipping undecodable resource: %s", label)
+            continue
         if isinstance(payload, str):
             payload = payload.encode("utf-8")
 
@@ -226,3 +231,30 @@ def convert_html_to_markdown(html: str) -> str:
         heading_style="ATX",
         bullets="-",
     )
+
+
+def convert_mht(input_path: Path, assets_dir: Path) -> str:
+    """Convert an MHT/MHTML file to Markdown with extracted assets.
+
+    Orchestrates the full pipeline: parse MHT, extract resources,
+    rewrite HTML references, and convert to Markdown.
+
+    Args:
+        input_path: Path to the MHT/MHTML file.
+        assets_dir: Directory to extract resource assets into.
+
+    Returns:
+        Markdown string.
+
+    Raises:
+        MHTConvertError: If the file does not exist, is not valid
+            multipart/related MIME, or contains no HTML root part.
+    """
+    if not input_path.is_file():
+        raise MHTConvertError(f"File not found: {input_path}")
+
+    data = input_path.read_bytes()
+    parsed = parse_mht(data)
+    rewrite_map = extract_resources(parsed, assets_dir)
+    html = rewrite_html_references(parsed.root_html, rewrite_map)
+    return convert_html_to_markdown(html)

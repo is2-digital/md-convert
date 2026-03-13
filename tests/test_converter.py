@@ -11,6 +11,7 @@ from md_convert.converter import (
     ParsedMHT,
     Resource,
     convert_html_to_markdown,
+    convert_mht,
     extract_resources,
     parse_mht,
     rewrite_html_references,
@@ -326,3 +327,69 @@ class TestConvertHtmlToMarkdown:
     def test_empty_html(self) -> None:
         result = convert_html_to_markdown("")
         assert result.strip() == ""
+
+
+class TestConvertMHT:
+    """Tests for convert_mht() public API."""
+
+    def test_full_pipeline(self, mht_with_image: bytes, tmp_path: Path) -> None:
+        mht_file = tmp_path / "test.mht"
+        mht_file.write_bytes(mht_with_image)
+        assets = tmp_path / "assets"
+
+        markdown = convert_mht(mht_file, assets)
+
+        assert "image1.png" in markdown
+        assert (assets / "image1.png").exists()
+
+    def test_simple_html_only(self, simple_mht: bytes, tmp_path: Path) -> None:
+        mht_file = tmp_path / "simple.mht"
+        mht_file.write_bytes(simple_mht)
+        assets = tmp_path / "assets"
+
+        markdown = convert_mht(mht_file, assets)
+
+        assert "Hello" in markdown
+        assert not assets.exists()
+
+    def test_missing_file_raises(self, tmp_path: Path) -> None:
+        missing = tmp_path / "nonexistent.mht"
+        with pytest.raises(MHTConvertError, match="File not found"):
+            convert_mht(missing, tmp_path / "assets")
+
+    def test_invalid_mime_raises(self, tmp_path: Path) -> None:
+        bad_file = tmp_path / "bad.mht"
+        bad_file.write_bytes(b"Content-Type: text/plain\r\n\r\nNot MHT")
+        with pytest.raises(MHTConvertError, match="Expected multipart/related"):
+            convert_mht(bad_file, tmp_path / "assets")
+
+    def test_no_html_root_raises(self, tmp_path: Path) -> None:
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("related")
+        msg.attach(MIMEText("plain text only", "plain", "utf-8"))
+        no_html = tmp_path / "nohtml.mht"
+        no_html.write_bytes(msg.as_bytes())
+
+        with pytest.raises(MHTConvertError, match="No HTML root part"):
+            convert_mht(no_html, tmp_path / "assets")
+
+    def test_skips_undecodable_resource(self, tmp_path: Path) -> None:
+        from email.mime.base import MIMEBase
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        msg = MIMEMultipart("related")
+        msg.attach(MIMEText("<html><body><p>OK</p></body></html>", "html", "utf-8"))
+        bad_part = MIMEBase("image", "png")
+        bad_part.set_payload(b"\x89PNG not-valid-base64 !!!")
+        bad_part["Content-Transfer-Encoding"] = "base64"
+        bad_part["Content-Location"] = "broken.png"
+        msg.attach(bad_part)
+
+        mht_file = tmp_path / "undecodable.mht"
+        mht_file.write_bytes(msg.as_bytes())
+
+        markdown = convert_mht(mht_file, tmp_path / "assets")
+        assert "OK" in markdown

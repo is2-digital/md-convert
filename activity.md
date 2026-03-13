@@ -72,3 +72,15 @@ Added `convert_html_to_markdown()` to `src/md_convert/converter.py`:
 Added 8 tests in `TestConvertHtmlToMarkdown` covering: paragraphs, ATX headings, dash bullets, script stripping, style stripping, image preservation, links, empty HTML.
 
 Verification: All 31 tests pass.
+
+## 2026-03-12 — Implement convert_mht public API (mdc-0n5)
+
+Added `convert_mht(input_path, assets_dir)` to `src/md_convert/converter.py`:
+- Orchestrates the full pipeline: parse MHT -> extract resources -> rewrite HTML references -> convert to Markdown
+- Validates input file existence, raises `MHTConvertError` for missing files
+- Delegates MIME validation and HTML root checks to `parse_mht()`
+- Skips undecodable resources with logger warning (try/except in `parse_mht` around `get_content()`)
+
+Added 6 tests in `TestConvertMHT` covering: full pipeline, HTML-only input, missing file, invalid MIME, no HTML root, undecodable resource skipping.
+
+Verification: All 37 tests pass.
