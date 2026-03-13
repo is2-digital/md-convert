@@ -84,3 +84,12 @@ Added `convert_mht(input_path, assets_dir)` to `src/md_convert/converter.py`:
 Added 6 tests in `TestConvertMHT` covering: full pipeline, HTML-only input, missing file, invalid MIME, no HTML root, undecodable resource skipping.
 
 Verification: All 37 tests pass.
+
+## 2026-03-12 — Close Phase 2: Core Converter (mdc-fr9)
+
+Final code review of the converter module (parent task with all 5 children completed):
+- MHT parsing, resource extraction, HTML rewriting, Markdown conversion all implemented
+- Full pipeline orchestrated via `convert_mht()` public API
+- Error handling via `MHTConvertError`, undecodable resource skipping with warnings
+- All 37 tests pass across 5 test classes
+- No issues found; parent task closed.
