@@ -34,10 +34,19 @@ md-convert is a CLI utility that converts MHT/MHTML files into Markdown with ext
 md-convert = md_convert.cli:main
 ```
 
-## CLI Usage
+## CLI Module
+
+The CLI is implemented in `cli.py` using `argparse`.
+
+- **`build_parser()`** — Constructs the `ArgumentParser` with positional `INPUT` and optional `--output`/`--assets-folder` flags.
+- **`main(argv=None)`** — Entry point. Parses args, calls `convert_mht()`, writes Markdown to `--output` or stdout. Prints `MHTConvertError` messages to stderr and exits with code 1.
+
+### Usage
 
 ```bash
-md-convert INPUT.mht --output OUTPUT.md --assets-folder assets
+md-convert INPUT.mht                          # output to stdout, assets in ./assets/
+md-convert INPUT.mht -o OUTPUT.md             # output to file
+md-convert INPUT.mht -o OUTPUT.md -a imgs     # custom assets folder
 ```
 
 ## Converter Module

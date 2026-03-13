@@ -93,3 +93,14 @@ Final code review of the converter module (parent task with all 5 children compl
 - Error handling via `MHTConvertError`, undecodable resource skipping with warnings
 - All 37 tests pass across 5 test classes
 - No issues found; parent task closed.
+
+## 2026-03-12 — Implement cli.py argparse entry point (mdc-199)
+
+Created `src/md_convert/cli.py` with:
+- `build_parser()`: constructs ArgumentParser with positional `input` (Path), `-o/--output` (Path, default stdout), `-a/--assets-folder` (Path, default `assets`)
+- `main(argv=None)`: parses args, calls `convert_mht()`, writes to file or stdout, handles `MHTConvertError` with stderr message and exit code 1
+- Creates parent directories for output file if needed
+
+Updated `docs/application.md` with CLI module documentation.
+
+Verification: Help output correct, error handling works (missing file prints error to stderr), all 37 existing tests pass.
