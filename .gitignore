@@ -3,6 +3,8 @@
 .dolt/
 *.db
 
+.ralph/ralph-logs
+
 .cache
 .venv/
 __pycache__/
