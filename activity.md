@@ -48,3 +48,16 @@ Added `extract_resources()` to `src/md_convert/converter.py`:
 Added 7 tests in `TestExtractResources` covering: write to disk, cid/location dedup, empty resources, directory creation, filename collisions, multiple resources, URL-based filename extraction.
 
 Verification: All 15 tests pass.
+
+## 2026-03-12 — Implement HTML reference rewriting (mdc-blx)
+
+Added `rewrite_html_references()` to `src/md_convert/converter.py`:
+- Parses HTML with BeautifulSoup4 (`html.parser`)
+- Rewrites `img[src]` attributes using the rewrite map
+- Rewrites `link[href]` attributes using the rewrite map
+- Handles Content-Location URLs, `cid:` references, and absolute URLs
+- Leaves unmatched references unchanged
+
+Added 8 tests in `TestRewriteHtmlReferences` covering: img src rewrite, cid reference, link href, unmatched references, absolute URLs, multiple images, empty map, no matching elements.
+
+Verification: All 23 tests pass.

@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlparse
 
+from bs4 import BeautifulSoup
+
 from md_convert import MHTConvertError
 
 logger = logging.getLogger(__name__)
@@ -169,3 +171,35 @@ def extract_resources(
         written[rid] = rel_path
 
     return rewrite_map
+
+
+def rewrite_html_references(
+    html: str,
+    rewrite_map: dict[str, str],
+) -> str:
+    """Replace resource references in HTML using the rewrite map.
+
+    Rewrites ``src`` attributes on ``<img>`` tags and ``href`` attributes
+    on ``<link>`` tags when they match a key in *rewrite_map*.
+
+    Args:
+        html: The root HTML string from the MHT file.
+        rewrite_map: Mapping from original reference URLs to local asset paths,
+            as returned by :func:`extract_resources`.
+
+    Returns:
+        Modified HTML string with references rewritten to local paths.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+
+    for img in soup.find_all("img", src=True):
+        src = img["src"]
+        if src in rewrite_map:
+            img["src"] = rewrite_map[src]
+
+    for link in soup.find_all("link", href=True):
+        href = link["href"]
+        if href in rewrite_map:
+            link["href"] = rewrite_map[href]
+
+    return str(soup)

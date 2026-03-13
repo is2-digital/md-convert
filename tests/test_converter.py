@@ -7,7 +7,13 @@ from pathlib import Path
 import pytest
 
 from md_convert import MHTConvertError
-from md_convert.converter import ParsedMHT, Resource, extract_resources, parse_mht
+from md_convert.converter import (
+    ParsedMHT,
+    Resource,
+    extract_resources,
+    parse_mht,
+    rewrite_html_references,
+)
 from conftest import build_mht
 
 
@@ -213,3 +219,60 @@ class TestExtractResources:
         extract_resources(parsed, assets)
 
         assert (assets / "logo.gif").exists()
+
+
+class TestRewriteHtmlReferences:
+    """Tests for rewrite_html_references()."""
+
+    def test_rewrites_img_src(self) -> None:
+        html = '<html><body><img src="image1.png"></body></html>'
+        rewrite_map = {"image1.png": "assets/image1.png"}
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'src="assets/image1.png"' in result
+
+    def test_rewrites_cid_reference(self) -> None:
+        html = '<html><body><img src="cid:img001@example"></body></html>'
+        rewrite_map = {"cid:img001@example": "assets/image1.png"}
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'src="assets/image1.png"' in result
+
+    def test_rewrites_link_href(self) -> None:
+        html = '<html><head><link href="style.css" rel="stylesheet"></head></html>'
+        rewrite_map = {"style.css": "assets/style.css"}
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'href="assets/style.css"' in result
+
+    def test_leaves_unmatched_references_unchanged(self) -> None:
+        html = '<html><body><img src="unknown.png"></body></html>'
+        rewrite_map = {"other.png": "assets/other.png"}
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'src="unknown.png"' in result
+
+    def test_rewrites_absolute_url(self) -> None:
+        html = '<html><body><img src="http://example.com/images/logo.gif"></body></html>'
+        rewrite_map = {
+            "http://example.com/images/logo.gif": "assets/logo.gif"
+        }
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'src="assets/logo.gif"' in result
+
+    def test_rewrites_multiple_images(self) -> None:
+        html = '<html><body><img src="a.png"><img src="b.jpg"></body></html>'
+        rewrite_map = {
+            "a.png": "assets/a.png",
+            "b.jpg": "assets/b.jpg",
+        }
+        result = rewrite_html_references(html, rewrite_map)
+        assert 'src="assets/a.png"' in result
+        assert 'src="assets/b.jpg"' in result
+
+    def test_empty_rewrite_map(self) -> None:
+        html = '<html><body><img src="image.png"></body></html>'
+        result = rewrite_html_references(html, {})
+        assert 'src="image.png"' in result
+
+    def test_no_matching_elements(self) -> None:
+        html = "<html><body><p>No images here</p></body></html>"
+        rewrite_map = {"image.png": "assets/image.png"}
+        result = rewrite_html_references(html, rewrite_map)
+        assert "No images here" in result
