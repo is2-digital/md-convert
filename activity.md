@@ -12,3 +12,12 @@ Created `pyproject.toml` with:
 - pytest config with `testpaths = ["tests"]`
 
 Verification: TOML syntax validated with Python's `tomllib`.
+
+## 2026-03-12 — Create src/md_convert/__init__.py (mdc-vah)
+
+Created `src/md_convert/__init__.py` with:
+- Package docstring
+- `__version__ = "0.1.0"` (matches pyproject.toml)
+- `MHTConvertError` exception class for user-facing errors
+
+Verification: Installed package in editable mode, confirmed `__version__` and `MHTConvertError` import correctly.
