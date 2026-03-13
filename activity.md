@@ -104,3 +104,14 @@ Created `src/md_convert/cli.py` with:
 Updated `docs/application.md` with CLI module documentation.
 
 Verification: Help output correct, error handling works (missing file prints error to stderr), all 37 existing tests pass.
+
+## 2026-03-12 — Create test fixtures in conftest.py (mdc-zg1)
+
+Added three new pytest fixtures to `tests/conftest.py`:
+- `images_mht`: HTML with two images referenced by Content-Location (PNG + JPEG)
+- `cid_mht`: HTML with two images referenced via `cid:` URIs (PNG + GIF)
+- `malformed_mht`: Plain text bytes (not valid multipart/related MIME)
+
+These supplement the existing `simple_mht` and `mht_with_image` fixtures for comprehensive test coverage.
+
+Verification: All 37 existing tests pass. Smoke-tested all new fixtures produce correct MIME structures.
