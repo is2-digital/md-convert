@@ -61,3 +61,63 @@ def mht_with_image() -> bytes:
             },
         ],
     )
+
+
+@pytest.fixture
+def images_mht() -> bytes:
+    """An MHT file with HTML and two images referenced by Content-Location."""
+    return build_mht(
+        html=(
+            "<html><body>"
+            '<img src="image1.png">'
+            '<img src="image2.jpg">'
+            "</body></html>"
+        ),
+        resources=[
+            {
+                "content_type": "image/png",
+                "payload": b"\x89PNG first image",
+                "content_location": "image1.png",
+                "content_id": None,
+            },
+            {
+                "content_type": "image/jpeg",
+                "payload": b"\xff\xd8\xff second image",
+                "content_location": "image2.jpg",
+                "content_id": None,
+            },
+        ],
+    )
+
+
+@pytest.fixture
+def cid_mht() -> bytes:
+    """An MHT file with images referenced via cid: URIs."""
+    return build_mht(
+        html=(
+            "<html><body>"
+            '<img src="cid:logo@example">'
+            '<img src="cid:banner@example">'
+            "</body></html>"
+        ),
+        resources=[
+            {
+                "content_type": "image/png",
+                "payload": b"\x89PNG logo data",
+                "content_location": None,
+                "content_id": "<logo@example>",
+            },
+            {
+                "content_type": "image/gif",
+                "payload": b"GIF89a banner data",
+                "content_location": None,
+                "content_id": "<banner@example>",
+            },
+        ],
+    )
+
+
+@pytest.fixture
+def malformed_mht() -> bytes:
+    """A plain-text message that is not valid multipart/related MIME."""
+    return b"This is just plain text, not a valid MHT file."
