@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlparse
 
 from bs4 import BeautifulSoup
+from markdownify import markdownify
 
 from md_convert import MHTConvertError
 
@@ -203,3 +204,25 @@ def rewrite_html_references(
             link["href"] = rewrite_map[href]
 
     return str(soup)
+
+
+def convert_html_to_markdown(html: str) -> str:
+    """Convert HTML to Markdown using markdownify.
+
+    Uses ATX-style headings (``# H1``), dash bullets (``-``), and strips
+    ``<script>`` and ``<style>`` tags before conversion.
+
+    Args:
+        html: HTML string to convert.
+
+    Returns:
+        Markdown string.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup.find_all(["script", "style"]):
+        tag.decompose()
+    return markdownify(
+        str(soup),
+        heading_style="ATX",
+        bullets="-",
+    )

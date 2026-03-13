@@ -10,6 +10,7 @@ from md_convert import MHTConvertError
 from md_convert.converter import (
     ParsedMHT,
     Resource,
+    convert_html_to_markdown,
     extract_resources,
     parse_mht,
     rewrite_html_references,
@@ -276,3 +277,52 @@ class TestRewriteHtmlReferences:
         rewrite_map = {"image.png": "assets/image.png"}
         result = rewrite_html_references(html, rewrite_map)
         assert "No images here" in result
+
+
+class TestConvertHtmlToMarkdown:
+    """Tests for convert_html_to_markdown()."""
+
+    def test_converts_paragraph(self) -> None:
+        html = "<html><body><p>Hello world</p></body></html>"
+        result = convert_html_to_markdown(html)
+        assert "Hello world" in result
+
+    def test_atx_headings(self) -> None:
+        html = "<h1>Title</h1><h2>Subtitle</h2>"
+        result = convert_html_to_markdown(html)
+        assert "# Title" in result
+        assert "## Subtitle" in result
+
+    def test_dash_bullets(self) -> None:
+        html = "<ul><li>one</li><li>two</li></ul>"
+        result = convert_html_to_markdown(html)
+        assert "- one" in result
+        assert "- two" in result
+
+    def test_strips_script_tags(self) -> None:
+        html = '<html><body><p>Keep</p><script>alert("x")</script></body></html>'
+        result = convert_html_to_markdown(html)
+        assert "Keep" in result
+        assert "alert" not in result
+        assert "script" not in result
+
+    def test_strips_style_tags(self) -> None:
+        html = "<html><body><p>Keep</p><style>body{color:red}</style></body></html>"
+        result = convert_html_to_markdown(html)
+        assert "Keep" in result
+        assert "color:red" not in result
+
+    def test_preserves_image_references(self) -> None:
+        html = '<img src="assets/photo.png" alt="A photo">'
+        result = convert_html_to_markdown(html)
+        assert "assets/photo.png" in result
+        assert "A photo" in result
+
+    def test_converts_links(self) -> None:
+        html = '<a href="https://example.com">Click</a>'
+        result = convert_html_to_markdown(html)
+        assert "[Click](https://example.com)" in result
+
+    def test_empty_html(self) -> None:
+        result = convert_html_to_markdown("")
+        assert result.strip() == ""

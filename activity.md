@@ -61,3 +61,14 @@ Added `rewrite_html_references()` to `src/md_convert/converter.py`:
 Added 8 tests in `TestRewriteHtmlReferences` covering: img src rewrite, cid reference, link href, unmatched references, absolute URLs, multiple images, empty map, no matching elements.
 
 Verification: All 23 tests pass.
+
+## 2026-03-12 — Implement Markdown conversion (mdc-5tg)
+
+Added `convert_html_to_markdown()` to `src/md_convert/converter.py`:
+- Strips `<script>` and `<style>` tags via BeautifulSoup before conversion
+- Converts HTML to Markdown using `markdownify` with ATX headings and dash bullets
+- Preserves image references and links in Markdown output
+
+Added 8 tests in `TestConvertHtmlToMarkdown` covering: paragraphs, ATX headings, dash bullets, script stripping, style stripping, image preservation, links, empty HTML.
+
+Verification: All 31 tests pass.
