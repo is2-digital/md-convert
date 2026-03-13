@@ -80,6 +80,8 @@
     "autoAllowBashIfSandboxed": true,
     "enabled": true,
     "excludedCommands": [
+      "bd",
+      "dolt",
       "docker",
       "docker-compose",
       "git",
@@ -92,6 +94,7 @@
       "allowedDomains": [
         "127.0.0.1",
         "localhost",
+        "10.255.255.254",
         "registry.npmjs.org",
         "registry.yarnpkg.com",
         "unpkg.com",

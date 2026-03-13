@@ -15,11 +15,11 @@ When the agent runs in sandbox mode, certain commands are blocked by default and
 
 - Git commands (add, commit, diff, log, status)
 - File operations (read, write, edit)
-- `bd` (beads) commands
 - `python`, `pip`, `pytest` commands (via `.venv/bin/` or after `source .venv/bin/activate`)
 
 ### Requires OUTSIDE the agent sandbox (needs elevated permissions)
 
+- `bd` (beads) commands — requires Dolt database connection on localhost
 - `git push` / `git pull`
 - Network access (pip install from PyPI)
 
