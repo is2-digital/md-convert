@@ -28,28 +28,28 @@ pip install -e ".[dev]"
 md-convert INPUT.mht
 ```
 
-This parses the MHT file, extracts embedded resources to an `assets/` directory, and prints the resulting Markdown to stdout.
+This parses the MHT file, extracts embedded resources to an `assets/` directory, and writes the Markdown output to `page.md` (same name as input with `.md` extension).
 
 ### Options
 
 | Option | Description |
 |---|---|
 | `INPUT` | Path to the MHT/MHTML file to convert (required) |
-| `-o`, `--output FILE` | Write Markdown to a file instead of stdout |
+| `-o`, `--output FILE` | Write Markdown to a specific file (default: input filename with `.md` extension) |
 | `-a`, `--assets-folder DIR` | Directory for extracted assets (default: `assets`) |
 
 ### Examples
 
-Convert an MHT file and print Markdown to stdout:
+Convert an MHT file (output written to `page.md`):
 
 ```bash
 md-convert page.mht
 ```
 
-Convert to a file with the default assets folder:
+Convert to a specific output file:
 
 ```bash
-md-convert page.mht -o page.md
+md-convert page.mht -o notes/page.md
 ```
 
 Convert with a custom assets folder:
@@ -60,10 +60,11 @@ md-convert page.mht -o page.md -a images
 
 ## How It Works
 
-1. **Parse** -- Reads the MHT/MHTML file using Python's `email` module and validates the `multipart/related` MIME structure.
+1. **Parse** -- Reads the MHT/MHTML file using Python's `email` module and validates the `multipart/related` MIME structure. Handles non-standard charsets like `unicode` (UTF-16) from Microsoft Word/Outlook.
 2. **Extract** -- Writes embedded images and resources to the assets folder, deduplicating files and handling filename collisions.
 3. **Rewrite** -- Updates `<img>` and `<link>` references in the HTML to point to the extracted local assets.
-4. **Convert** -- Transforms the rewritten HTML into Markdown using `markdownify` with ATX-style headings and dash-style bullets.
+4. **Clean** -- Pre-processes Word/Outlook HTML by converting CSS-class headings to proper HTML headings, unwrapping layout tables, and stripping MSO conditional comments.
+5. **Convert** -- Transforms the cleaned HTML into Markdown using `markdownify` with ATX-style headings and dash-style bullets.
 
 ## Development
 

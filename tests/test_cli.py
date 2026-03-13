@@ -52,7 +52,7 @@ class TestBuildParser:
 class TestMainEndToEnd:
     """End-to-end tests for the main() entry point."""
 
-    def test_converts_to_stdout(
+    def test_converts_to_default_md_file(
         self, simple_mht: bytes, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         mht_file = tmp_path / "test.mht"
@@ -60,8 +60,11 @@ class TestMainEndToEnd:
 
         main([str(mht_file)])
 
+        default_out = tmp_path / "test.md"
+        assert default_out.exists()
+        assert "Hello" in default_out.read_text()
         captured = capsys.readouterr()
-        assert "Hello" in captured.out
+        assert "successfully converted" in captured.out
 
     def test_converts_to_output_file(
         self, simple_mht: bytes, tmp_path: Path
@@ -134,12 +137,12 @@ class TestMainEndToEnd:
         assert "File not found" in captured.err
 
     def test_output_contains_markdown_image_ref(
-        self, mht_with_image: bytes, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+        self, mht_with_image: bytes, tmp_path: Path
     ) -> None:
         mht_file = tmp_path / "test.mht"
         mht_file.write_bytes(mht_with_image)
 
         main([str(mht_file), "-a", str(tmp_path / "assets")])
 
-        captured = capsys.readouterr()
-        assert "image1.png" in captured.out
+        default_out = tmp_path / "test.md"
+        assert "image1.png" in default_out.read_text()

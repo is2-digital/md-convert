@@ -26,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--output",
         type=Path,
         default=None,
-        help="Output Markdown file path (default: stdout)",
+        help="Output Markdown file path (default: input filename with .md extension)",
     )
     parser.add_argument(
         "-a",
@@ -49,8 +49,7 @@ def main(argv: list[str] | None = None) -> None:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    if args.output is not None:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(markdown, encoding="utf-8")
-    else:
-        print(markdown)
+    output_path = args.output if args.output is not None else args.input.with_suffix(".md")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(markdown, encoding="utf-8")
+    print(f"{args.input} successfully converted to .md here: {output_path}")

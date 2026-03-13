@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import codecs
 import email
 import email.policy
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from urllib.parse import unquote, urlparse
@@ -70,7 +72,22 @@ def parse_mht(data: bytes) -> ParsedMHT:
         content_id = part.get("Content-ID")
 
         if root_html is None and part_type == "text/html":
-            root_html = part.get_content()
+            try:
+                root_html = part.get_content()
+            except LookupError:
+                # Handle unknown charsets like "unicode" (MS Word/Outlook)
+                raw = part.get_payload(decode=True)
+                charset = part.get_param("charset", "utf-8")
+                fallbacks = [charset, "utf-16", "utf-8", "latin-1"]
+                for enc in fallbacks:
+                    try:
+                        codecs.lookup(enc)
+                        root_html = raw.decode(enc)
+                        break
+                    except (LookupError, UnicodeDecodeError):
+                        continue
+                if root_html is None:
+                    root_html = raw.decode("latin-1")
             continue
 
         try:
@@ -211,6 +228,67 @@ def rewrite_html_references(
     return str(soup)
 
 
+_TITLE_CLASS_MAP = {
+    "first-level-title": "h1",
+    "second-level-title": "h2",
+    "third-level-title": "h3",
+}
+
+
+def _is_layout_table(table):
+    """Detect tables used for layout rather than data."""
+    rows = table.find_all("tr", recursive=False)
+    tbody = table.find("tbody", recursive=False)
+    if tbody:
+        rows = tbody.find_all("tr", recursive=False)
+    if len(rows) == 1:
+        cells = rows[0].find_all(["td", "th"], recursive=False)
+        if len(cells) == 1:
+            return True
+    # Tables with no <th> and containing block-level content are likely layout
+    if not table.find("th"):
+        for td in table.find_all("td"):
+            if td.find(["p", "div", "h1", "h2", "h3", "h4", "table", "ul", "ol"]):
+                return True
+    return False
+
+
+def _clean_html_for_markdown(html: str) -> str:
+    """Pre-process Word/Outlook HTML for better Markdown conversion."""
+    # Strip MSO conditional comments: <!--[if ...]>...<![endif]-->
+    html = re.sub(r"<!--\[if[^]]*\]>.*?<!\[endif\]-->", "", html, flags=re.DOTALL)
+    html = re.sub(r"<!--\[if[^]]*\]>.*?<!\[endif\]-->", "", html, flags=re.DOTALL)
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Remove script, style, and XML tags
+    for tag in soup.find_all(["script", "style", "xml", "o:p"]):
+        tag.decompose()
+
+    # Convert title-class paragraphs to proper heading tags
+    for css_class, heading_tag in _TITLE_CLASS_MAP.items():
+        for p in soup.find_all("p", class_=css_class):
+            p.name = heading_tag
+            if p.attrs.get("class"):
+                del p.attrs["class"]
+
+    # Unwrap layout tables — replace with their inner content
+    changed = True
+    while changed:
+        changed = False
+        for table in soup.find_all("table"):
+            if _is_layout_table(table):
+                table.unwrap()
+                changed = True
+    # Also unwrap leftover tbody/tr/td that no longer sit inside a table
+    for tag_name in ["tbody", "tr", "td"]:
+        for tag in soup.find_all(tag_name):
+            if not tag.find_parent("table"):
+                tag.unwrap()
+
+    return str(soup)
+
+
 def convert_html_to_markdown(html: str) -> str:
     """Convert HTML to Markdown using markdownify.
 
@@ -223,14 +301,15 @@ def convert_html_to_markdown(html: str) -> str:
     Returns:
         Markdown string.
     """
-    soup = BeautifulSoup(html, "html.parser")
-    for tag in soup.find_all(["script", "style"]):
-        tag.decompose()
-    return markdownify(
-        str(soup),
+    cleaned = _clean_html_for_markdown(html)
+    md = markdownify(
+        cleaned,
         heading_style="ATX",
         bullets="-",
     )
+    # Collapse excessive blank lines (3+ → 2)
+    md = re.sub(r"\n{3,}", "\n\n", md)
+    return md
 
 
 def convert_mht(input_path: Path, assets_dir: Path) -> str:
