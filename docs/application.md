@@ -40,6 +40,17 @@ md-convert = md_convert.cli:main
 md-convert INPUT.mht --output OUTPUT.md --assets-folder assets
 ```
 
+## Converter Module
+
+### Data Classes
+
+- **`Resource`** — Holds a single MIME part: `content_type`, `payload` (bytes), `content_location`, `content_id`.
+- **`ParsedMHT`** — Result of parsing: `root_html` (str) and `resources` (dict keyed by Content-Location and `cid:` Content-ID).
+
+### Functions
+
+- **`parse_mht(data: bytes) -> ParsedMHT`** — Parses MHT bytes using `email.message_from_bytes()`, validates multipart/related, extracts root HTML and builds resource map. Raises `MHTConvertError` on invalid input.
+
 ## Development
 
 ```bash
