@@ -123,3 +123,15 @@ Created `tests/test_cli.py` with 15 tests in two classes:
 - `TestMainEndToEnd` (8 tests): stdout output, file output, parent dir creation, asset extraction, custom assets folder, invalid file error exit, missing file error exit, markdown image reference in output
 
 Verification: All 52 tests pass (37 converter + 15 CLI).
+
+## 2026-03-12 — Update README.md with usage instructions (mdc-2lm)
+
+Updated `README.md` with:
+- Project overview and requirements
+- Installation instructions (clone, venv, pip install)
+- CLI usage with options table (input, --output, --assets-folder)
+- Three usage examples (stdout, file output, custom assets folder)
+- "How It Works" section explaining the 4-step pipeline
+- Development section with test commands
+
+Verification: All 52 tests pass.
