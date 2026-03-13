@@ -115,3 +115,11 @@ Added three new pytest fixtures to `tests/conftest.py`:
 These supplement the existing `simple_mht` and `mht_with_image` fixtures for comprehensive test coverage.
 
 Verification: All 37 existing tests pass. Smoke-tested all new fixtures produce correct MIME structures.
+
+## 2026-03-12 — Write test_cli.py (mdc-ci4)
+
+Created `tests/test_cli.py` with 15 tests in two classes:
+- `TestBuildParser` (7 tests): input required, defaults, short/long flags for output and assets-folder, all flags combined
+- `TestMainEndToEnd` (8 tests): stdout output, file output, parent dir creation, asset extraction, custom assets folder, invalid file error exit, missing file error exit, markdown image reference in output
+
+Verification: All 52 tests pass (37 converter + 15 CLI).
