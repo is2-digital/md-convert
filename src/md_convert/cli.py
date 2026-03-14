@@ -53,3 +53,7 @@ def main(argv: list[str] | None = None) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
     print(f"{args.input} successfully converted to .md here: {output_path}")
+
+
+if __name__ == "__main__":
+    main()
